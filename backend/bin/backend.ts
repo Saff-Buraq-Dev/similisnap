@@ -7,7 +7,7 @@ import { App } from 'aws-cdk-lib';
 
 const env_sg_aws_prod_ca_central_1 = {
     account: '640111341785',
-    region: 'us-east-1'
+    region: 'ca-central-1'
 }
 
 const app = new App();
