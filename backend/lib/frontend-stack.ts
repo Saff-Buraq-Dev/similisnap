@@ -75,6 +75,7 @@ export class FrontendStack extends Stack {
 
         const cfnDistribution = this.distribution.node.defaultChild as CfnDistribution;
 
+        cfnDistribution.addOverride('Properties.DistributionConfig.Origins.0.S3OriginConfig.OriginAccessIdentity', "");
         cfnDistribution.addPropertyOverride('DistributionConfig.Origins.0.OriginAccessControlId', oac.getAtt('Id'));
 
         // Update bucket policy to grant CloudFront access
