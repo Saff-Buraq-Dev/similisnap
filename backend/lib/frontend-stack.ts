@@ -1,9 +1,8 @@
 import { Duration, RemovalPolicy, Stack, StackProps } from 'aws-cdk-lib';
-import { Certificate, CertificateValidation } from 'aws-cdk-lib/aws-certificatemanager';
+import { Certificate, ICertificate } from 'aws-cdk-lib/aws-certificatemanager';
 import { AllowedMethods, CachePolicy, CachedMethods, CfnDistribution, CfnOriginAccessControl, Distribution, PriceClass, ViewerProtocolPolicy } from 'aws-cdk-lib/aws-cloudfront';
 import { S3Origin } from 'aws-cdk-lib/aws-cloudfront-origins';
 import { PolicyStatement, ServicePrincipal } from 'aws-cdk-lib/aws-iam';
-import { HostedZone } from 'aws-cdk-lib/aws-route53';
 import { BlockPublicAccess, Bucket } from 'aws-cdk-lib/aws-s3';
 import { Construct } from 'constructs';
 
@@ -14,6 +13,7 @@ interface FrontendStackProps extends StackProps {
     paramProjectEnv: string;
     paramProjectId: string;
     paramHostedZoneId: string;
+    paramCertificateArn: string;
 }
 
 
@@ -22,15 +22,12 @@ export class FrontendStack extends Stack {
 
     private bucket: Bucket;
     private distribution: Distribution;
-    private certificate: Certificate;
+    private certificate: ICertificate;
 
     constructor(scope: Construct, id: string, props: FrontendStackProps) {
         super(scope, id, props);
 
-        this.certificate = new Certificate(this, 'SimiliSnapCertificate', {
-            domainName: 'similisnap.gharbidev.com',
-            validation: CertificateValidation.fromDns(HostedZone.fromHostedZoneId(this, 'SimiliSnapHostedZone', props.paramHostedZoneId)),
-        });
+        this.certificate = Certificate.fromCertificateArn(this, 'SimiliSnapCertificate', props.paramCertificateArn);
 
         this.bucket = new Bucket(this, 'VueAppBucket', {
             bucketName: `${props.paramProjectName}-${props.paramProjectEnv}-${props.paramProjectId}-vueappbucket`,
