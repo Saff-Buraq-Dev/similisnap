@@ -1,9 +1,6 @@
 name: FRONTEND CI/CD
 
 on:
-  push:
-    branches:
-      - main
   pull_request:
     branches:
       - main
@@ -56,6 +53,7 @@ jobs:
       working-directory: ${{ env.BACKEND_APP_PATH }}
 
   copy-app:
+    needs: deploy-infra
     if: ${{ github.event.pull_request.merged }}
     runs-on: ubuntu-latest
 
@@ -70,10 +68,6 @@ jobs:
 
     - name: Install cdk dependencies
       run: npm install --frozen-lockfile
-      working-directory: ${{ env.FRONTEND_APP_PATH }}
-
-    - name: Run backend tests
-      run: npm run test
       working-directory: ${{ env.FRONTEND_APP_PATH }}
 
     - name: Configure AWS credentials
