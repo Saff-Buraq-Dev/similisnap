@@ -1,5 +1,5 @@
 import { Duration, Stack, StackProps } from 'aws-cdk-lib';
-import { LambdaIntegration, RestApi, TokenAuthorizer } from 'aws-cdk-lib/aws-apigateway';
+import { AuthorizationType, LambdaIntegration, RestApi, TokenAuthorizer } from 'aws-cdk-lib/aws-apigateway';
 import { Code, Function, Runtime } from 'aws-cdk-lib/aws-lambda';
 import { Construct } from 'constructs';
 import { Certificate, CertificateValidation } from 'aws-cdk-lib/aws-certificatemanager';
@@ -33,7 +33,7 @@ export class BackendStack extends Stack {
     });
 
     this.usersPreferencesTable = new Table(this, 'UsersTable', {
-      partitionKey: { name: 'id', type: AttributeType.STRING },
+      partitionKey: { name: 'uid', type: AttributeType.STRING },
       deletionProtection: true,
       billingMode: BillingMode.PAY_PER_REQUEST
     });
@@ -49,12 +49,14 @@ export class BackendStack extends Stack {
         endpointType: EndpointType.REGIONAL,
       }
     });
+
     // Dependency between api gateway and certificate
     this.apiGateway.node.addDependency(this.apiCertificate);
 
     // Authorizer
     this.authorizer = new TokenAuthorizer(this, 'SimiliSnapAuthorizer', {
       handler: Function.fromFunctionArn(this, 'lambdaAuthorizer', props.paramLambdaAuthorizerArn),
+      authorizerName: 'SimiliSnapAuthorizer',
     });
 
     // Lambda welcome users
@@ -72,6 +74,9 @@ export class BackendStack extends Stack {
     this.usersPreferencesTable.grantReadWriteData(this.lambdaFunctionWelcomeUser);
 
     const usersResource = this.apiGateway.root.addResource('users');
-    usersResource.addMethod('POST', new LambdaIntegration(this.lambdaFunctionWelcomeUser), { authorizer: this.authorizer });
+    usersResource.addMethod('POST', new LambdaIntegration(this.lambdaFunctionWelcomeUser), {
+      authorizer: this.authorizer,
+      authorizationType: AuthorizationType.CUSTOM
+    });
   }
 }
