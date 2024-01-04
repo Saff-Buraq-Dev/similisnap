@@ -3,13 +3,13 @@ import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 
 const firebaseConfig = {
-    apiKey: process.env.VUE_APP_FIREBASE_API_KEY,
-    authDomain: process.env.VUE_APP_FIREBASE_AUTH_DOMAIN,
-    projectId: process.env.VUE_APP_FIREBASE_PROJECT_ID,
-    storageBucket: process.env.VUE_APP_FIREBASE_STORAGE_BUCKET,
-    messagingSenderId: process.env.VUE_APP_FIREBASE_MESSAGING_SENDER_ID,
-    appId: process.env.VUE_APP_FIREBASE_APP_ID,
-    measurementId: process.env.VUE_APP_FIREBASE_MEASUREMENT_ID
+    apiKey: "AIzaSyCuEagtkkdTVkFt-09ORONtlMsrnrhKNi4",
+    authDomain: "gharbidev.firebaseapp.com",
+    projectId: "gharbidev",
+    storageBucket: "gharbidev.appspot.com",
+    messagingSenderId: "533136030031",
+    appId: "1:533136030031:web:a46a12ee3f8b66cec5ed3a",
+    measurementId: "G-306R1H98X5"
 };
 
 // Initialize Firebase
