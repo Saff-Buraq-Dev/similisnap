@@ -12,7 +12,6 @@ interface FrontendStackProps extends StackProps {
     paramProjectName: string;
     paramProjectEnv: string;
     paramProjectId: string;
-    paramHostedZoneId: string;
     paramCertificateArn: string;
 }
 
