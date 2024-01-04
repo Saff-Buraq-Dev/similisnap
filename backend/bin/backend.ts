@@ -15,7 +15,6 @@ new BackendStack(app, 'BackendStack', {
     paramProjectName: 'similisnap-backend',
     paramProjectEnv: 'prd',
     paramProjectId: '01',
-    paramCertificateArn: 'arn:aws:acm:us-east-1:640111341785:certificate/bd38c478-8bfa-44db-82e0-6500638c2867',
     paramLambdaAuthorizerArn: 'arn:aws:lambda:ca-central-1:640111341785:function:UtilityStack-APIGatewayFirebaseAuthorizer7F10DE6A-edRTkX2SNXDP'
 });
 
