@@ -31,7 +31,6 @@ export class FrontendStack extends Stack {
         this.bucket = new Bucket(this, 'VueAppBucket', {
             bucketName: `${props.paramProjectName}-${props.paramProjectEnv}-${props.paramProjectId}-vueappbucket`,
             publicReadAccess: false,
-            removalPolicy: RemovalPolicy.DESTROY,
             blockPublicAccess: BlockPublicAccess.BLOCK_ALL,
         });
 
