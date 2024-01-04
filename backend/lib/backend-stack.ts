@@ -2,7 +2,7 @@ import { Duration, Stack, StackProps } from 'aws-cdk-lib';
 import { LambdaIntegration, RestApi, TokenAuthorizer } from 'aws-cdk-lib/aws-apigateway';
 import { Code, Function, Runtime } from 'aws-cdk-lib/aws-lambda';
 import { Construct } from 'constructs';
-import { Certificate } from 'aws-cdk-lib/aws-certificatemanager';
+import { Certificate, CertificateValidation } from 'aws-cdk-lib/aws-certificatemanager';
 import { EndpointType } from 'aws-cdk-lib/aws-apigatewayv2';
 import { AttributeType, BillingMode, Table } from 'aws-cdk-lib/aws-dynamodb';
 
@@ -19,6 +19,7 @@ interface BackendStackProps extends StackProps {
 export class BackendStack extends Stack {
 
   private usersPreferencesTable: Table;
+  private apiCertificate: Certificate;
   private apiGateway: RestApi;
   private authorizer: TokenAuthorizer;
 
@@ -26,6 +27,11 @@ export class BackendStack extends Stack {
 
   constructor(scope: Construct, id: string, props: BackendStackProps) {
     super(scope, id, props);
+
+    this.apiCertificate = new Certificate(this, 'SimiliSnapCertificate', {
+      domainName: 'api.similisnap.gharbidev.com',
+      validation: CertificateValidation.fromDns()
+    });
 
     this.usersPreferencesTable = new Table(this, 'UsersTable', {
       tableName: `${props.paramProjectName}-${props.paramProjectEnv}-${props.paramProjectId}-similisnap-users-preferences4`,
@@ -41,10 +47,12 @@ export class BackendStack extends Stack {
       deploy: true,
       domainName: {
         domainName: 'api.similisnap.gharbidev.com',
-        certificate: Certificate.fromCertificateArn(this, 'SimiliSnapCertificate', props.paramCertificateArn),
+        certificate: this.apiCertificate,
         endpointType: EndpointType.REGIONAL,
       }
     });
+    // Dependency between api gateway and certificate
+    this.apiGateway.node.addDependency(this.apiCertificate);
 
     // Authorizer
     this.authorizer = new TokenAuthorizer(this, 'SimiliSnapAuthorizer', {

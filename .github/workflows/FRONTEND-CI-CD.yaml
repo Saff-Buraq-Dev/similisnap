@@ -5,22 +5,22 @@ on:
     branches:
       - main
     types: [closed]
+
 env:
   AWS_REGION: 'ca-central-1'
   FRONTEND_APP_PATH: './frontend'
   BACKEND_APP_PATH: './backend'
 
 permissions:
-  id-token: write   # Required for requesting the JWT
-  contents: read    # Required for actions/checkout
+  id-token: write
+  contents: read
 
 jobs:
   deploy-infra:
     if: ${{ github.event.pull_request.merged }}
     runs-on: ubuntu-latest
-
     steps:
-    - name: Set up Node.js
+    - name: Use Node.js
       uses: actions/setup-node@v4
       with:
         node-version: '18'
@@ -56,9 +56,8 @@ jobs:
     needs: deploy-infra
     if: ${{ github.event.pull_request.merged }}
     runs-on: ubuntu-latest
-
     steps:
-    - name: Set up Node.js
+    - name: Use Node.js
       uses: actions/setup-node@v4
       with:
         node-version: '18'
@@ -66,7 +65,7 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
 
-    - name: Install cdk dependencies
+    - name: Install frontend dependencies
       run: npm install --frozen-lockfile
       working-directory: ${{ env.FRONTEND_APP_PATH }}
 
