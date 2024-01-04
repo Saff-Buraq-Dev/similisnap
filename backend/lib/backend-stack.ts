@@ -13,7 +13,6 @@ interface BackendStackProps extends StackProps {
   paramProjectEnv: string;
   paramProjectId: string;
   paramLambdaAuthorizerArn: string;
-  paramCertificateArn: string;
 }
 
 export class BackendStack extends Stack {
@@ -34,7 +33,6 @@ export class BackendStack extends Stack {
     });
 
     this.usersPreferencesTable = new Table(this, 'UsersTable', {
-      tableName: `${props.paramProjectName}-${props.paramProjectEnv}-${props.paramProjectId}-similisnap-users-preferences4`,
       partitionKey: { name: 'id', type: AttributeType.STRING },
       deletionProtection: true,
       billingMode: BillingMode.PAY_PER_REQUEST
@@ -75,10 +73,5 @@ export class BackendStack extends Stack {
 
     const usersResource = this.apiGateway.root.addResource('users');
     usersResource.addMethod('POST', new LambdaIntegration(this.lambdaFunctionWelcomeUser), { authorizer: this.authorizer });
-
-
-
-
-
   }
 }
