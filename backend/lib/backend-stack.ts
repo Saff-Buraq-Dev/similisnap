@@ -1,5 +1,5 @@
 import { Duration, Stack, StackProps } from 'aws-cdk-lib';
-import { AuthorizationType, LambdaIntegration, RestApi, TokenAuthorizer } from 'aws-cdk-lib/aws-apigateway';
+import { AuthorizationType, Cors, LambdaIntegration, RestApi, TokenAuthorizer } from 'aws-cdk-lib/aws-apigateway';
 import { Code, Function, Runtime } from 'aws-cdk-lib/aws-lambda';
 import { Construct } from 'constructs';
 import { Certificate, CertificateValidation } from 'aws-cdk-lib/aws-certificatemanager';
@@ -47,6 +47,9 @@ export class BackendStack extends Stack {
         domainName: 'api.similisnap.gharbidev.com',
         certificate: this.apiCertificate,
         endpointType: EndpointType.REGIONAL,
+      },
+      defaultCorsPreflightOptions: {
+        allowOrigins: Cors.ALL_ORIGINS
       }
     });
 
