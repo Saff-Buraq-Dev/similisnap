@@ -16,7 +16,6 @@ interface FrontendStackProps extends StackProps {
 }
 
 
-
 export class FrontendStack extends Stack {
 
     private bucket: Bucket;
