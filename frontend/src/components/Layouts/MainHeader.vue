@@ -176,10 +176,10 @@
             <button
               class="dropdown-toggle text-start fs-14 text-black-emphasis d-flex align-items-center p-0 position-relative bg-transparent border-0 transition lh-1"
               type="button" data-bs-toggle="dropdown" aria-expanded="false">
-              <img src="../../assets/images/admin.jpg" class="rounded" width="44" height="44" alt="admin" />
+              <img :src="userPhotoUrl" class="rounded" width="44" height="44" alt="admin" />
               <span class="title d-none d-lg-block ms-10 ms-lg-15">
-                <span class="d-block fw-bold mb-5 mb-md-8">Victor James</span>
-                <span class="text-body-emphasis fw-semibold fs-13">Admin</span>
+                <span class="d-block fw-bold mb-5 mb-md-8">{{ userDisplayName }}</span>
+                <span class="text-body-emphasis fw-semibold fs-13">Community</span>
               </span>
             </button>
             <div class="dropdown-menu rounded-0 bg-white border-0 start-auto end-0">
@@ -187,7 +187,7 @@
                 <li class="text-body-secondary fw-semibold transition position-relative">
                   <i class="flaticon-user-2"></i>
                   My Account
-                  <router-link to="/"
+                  <router-link to="/account"
                     class="d-block position-absolute start-0 top-0 end-0 bottom-0 text-decoration-none"></router-link>
                 </li>
                 <li class="text-body-secondary fw-semibold transition position-relative">
@@ -221,7 +221,7 @@
 
 <script lang="ts">
 import { useStore } from "vuex";
-import { defineComponent, ref, onMounted } from "vue";
+import { defineComponent, ref, onMounted, computed } from "vue";
 import LightDarkSwtichBtn from "./LightDarkSwtichBtn.vue";
 import stateStore from "../../utils/store";
 
@@ -252,11 +252,26 @@ export default defineComponent({
       store.dispatch("logout");
     };
 
+    // Computed properties
+    const userPhotoUrl = computed(() => {
+      return store.state.user && store.state.user.photoUrl
+        ? store.state.user.photoUrl
+        : require('../../assets/images/anonymous-user.png');
+    });
+
+    const userDisplayName = computed(() => {
+      return store.state.user && store.state.user.displayName
+        ? store.state.user.displayName
+        : store.state.user.email;
+    });
+
     return {
       isSticky,
       stateStoreInstance,
       languages,
       store,
+      userPhotoUrl,
+      userDisplayName,
       logout
     };
   },

@@ -24,7 +24,8 @@ export default defineComponent({
       axios
         .post('/users', {
           uid: user["uid"],
-          email: user["email"]
+          email: user["email"],
+          displayName: user["displayName"]
         })
         .then((response) => {
           console.log(response);

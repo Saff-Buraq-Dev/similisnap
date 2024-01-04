@@ -6,6 +6,7 @@ import MaintenancePage from "../pages/MaintenancePage.vue";
 import LoginPage from "../pages/Authentication/LoginPage.vue";
 import RegisterPage from "../pages/Authentication/RegisterPage.vue";
 import GalleryPage from "../pages/GalleryPage.vue";
+import AccountPage from "../pages/Settings/AccountSettingsPage.vue";
 
 import VerificationNeeded from "../components/Authentication/EmailConfirmation/VerificationNeeded.vue";
 
@@ -19,6 +20,7 @@ const routes = [
 
   /** Needs Auth */
   { path: "/gallery", name: "GalleryPage", component: GalleryPage, meta: { requiresAuth: true } },
+  { path: "/account", name: "AccountPage", component: AccountPage, meta: { requiresAuth: true } },
 
   { path: "/verification", name: "VerificationNeeded", component: VerificationNeeded }
 ];
