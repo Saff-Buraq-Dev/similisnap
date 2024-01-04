@@ -23,6 +23,8 @@ export class BackendStack extends Stack {
   private authorizer: TokenAuthorizer;
 
   private lambdaFunctionWelcomeUser: Function;
+  private lambdaFunctionUpdateProfile: Function;
+  private lambdaFunctionGetUserProfile: Function;
 
   constructor(scope: Construct, id: string, props: BackendStackProps) {
     super(scope, id, props);
@@ -63,9 +65,9 @@ export class BackendStack extends Stack {
     });
 
     // Lambda welcome users
-    this.lambdaFunctionWelcomeUser = new Function(this, 'APIGatewayFirebaseAuthorizer', {
+    this.lambdaFunctionWelcomeUser = new Function(this, 'lambdaFunctionWelcomeUser', {
       functionName: `${props.paramProjectName}-${props.paramProjectEnv}-${props.paramProjectId}-lambdaWelcomeUsers`,
-      code: Code.fromAsset(path.join(__dirname, 'lambdas', 'handle-photos-upload')),
+      code: Code.fromAsset(path.join(__dirname, 'lambdas', 'welcome-users')),
       handler: 'lambda_function.lambda_handler',
       runtime: Runtime.PYTHON_3_12,
       timeout: Duration.seconds(30),
@@ -78,6 +80,45 @@ export class BackendStack extends Stack {
 
     const usersResource = this.apiGateway.root.addResource('users');
     usersResource.addMethod('POST', new LambdaIntegration(this.lambdaFunctionWelcomeUser), {
+      authorizer: this.authorizer,
+      authorizationType: AuthorizationType.CUSTOM
+    });
+
+    // Lambda update profile
+    this.lambdaFunctionUpdateProfile = new Function(this, 'lambdaFunctionUpdateProfile', {
+      functionName: `${props.paramProjectName}-${props.paramProjectEnv}-${props.paramProjectId}-lambdaUpdateProfile`,
+      code: Code.fromAsset(path.join(__dirname, 'lambdas', 'update-user-profile')),
+      handler: 'lambda_function.lambda_handler',
+      runtime: Runtime.PYTHON_3_12,
+      timeout: Duration.seconds(30),
+      environment: {
+        DDB_TABLE: this.usersPreferencesTable.tableName
+      }
+    });
+
+    this.usersPreferencesTable.grantReadWriteData(this.lambdaFunctionUpdateProfile);
+    usersResource.addMethod('PUT', new LambdaIntegration(this.lambdaFunctionUpdateProfile), {
+      authorizer: this.authorizer,
+      authorizationType: AuthorizationType.CUSTOM
+    });
+
+    // Lambda get user profile
+    this.lambdaFunctionGetUserProfile = new Function(this, 'lambdaFunctionGetUserProfile', {
+      functionName: `${props.paramProjectName}-${props.paramProjectEnv}-${props.paramProjectId}-lambdaGetUserProfile`,
+      code: Code.fromAsset(path.join(__dirname, 'lambdas', 'get-user-profile')),
+      handler: 'lambda_function.lambda_handler',
+      runtime: Runtime.PYTHON_3_12,
+      timeout: Duration.seconds(30),
+      environment: {
+        DDB_TABLE: this.usersPreferencesTable.tableName
+      }
+    });
+
+    this.usersPreferencesTable.grantReadData(this.lambdaFunctionGetUserProfile);
+
+    // Define a new resource for /users/{uid}
+    const userResource = usersResource.addResource('{uid}');
+    userResource.addMethod('GET', new LambdaIntegration(this.lambdaFunctionGetUserProfile), {
       authorizer: this.authorizer,
       authorizationType: AuthorizationType.CUSTOM
     });
