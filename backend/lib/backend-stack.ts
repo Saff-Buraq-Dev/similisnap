@@ -54,7 +54,7 @@ export class BackendStack extends Stack {
     // Lambda welcome users
     this.lambdaFunctionWelcomeUser = new Function(this, 'APIGatewayFirebaseAuthorizer', {
       functionName: `${props.paramProjectName}-${props.paramProjectEnv}-${props.paramProjectId}-lambdaWelcomeUsers`,
-      code: Code.fromAsset(path.join(__dirname, 'lambdas', 'handke-photos-upload')),
+      code: Code.fromAsset(path.join(__dirname, 'lambdas', 'handle-photos-upload')),
       handler: 'lambda_function.lambda_handler',
       runtime: Runtime.PYTHON_3_12,
       timeout: Duration.seconds(30),
