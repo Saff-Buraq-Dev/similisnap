@@ -16,6 +16,7 @@ table = dynamodb.Table(DDB_USERS)
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
+
 def lambda_handler(event, context):
     # Parse the JSON body from the event
     try:
