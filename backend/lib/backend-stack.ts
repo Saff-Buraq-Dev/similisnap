@@ -65,7 +65,7 @@ export class BackendStack extends Stack {
     });
 
     // Lambda welcome users
-    this.lambdaFunctionWelcomeUser = new Function(this, 'lambdaFunctionWelcomeUser', {
+    this.lambdaFunctionWelcomeUser = new Function(this, 'APIGatewayFirebaseAuthorizer', {
       functionName: `${props.paramProjectName}-${props.paramProjectEnv}-${props.paramProjectId}-lambdaWelcomeUsers`,
       code: Code.fromAsset(path.join(__dirname, 'lambdas', 'welcome-users')),
       handler: 'lambda_function.lambda_handler',
