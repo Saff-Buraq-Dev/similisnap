@@ -9,6 +9,9 @@ dynamodb = boto3.resource('dynamodb')
 # Get the table name from the environment variable
 DDB_USERS = os.environ.get('DDB_TABLE')
 
+# Get the DynamoDB table
+table = dynamodb.Table(DDB_USERS)
+
 # Initialize logger
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -26,9 +29,6 @@ def lambda_handler(event, context):
             'body': json.dumps({'error': 'Bad Request: Invalid input'})
         }
 
-    # Get the DynamoDB table
-    table = dynamodb.Table(DDB_USERS)
-
     # Insert item into DynamoDB
     try:
         response = table.get_item(Key={'uid': uid})
@@ -37,6 +37,7 @@ def lambda_handler(event, context):
                 'statusCode': 409,  # Conflict status code
                 'body': json.dumps({'error': 'User already exists'})
             }
+        logger.info(f'User does not exist, adding user...')
         response = table.put_item(
             Item={
                 'uid': uid,
