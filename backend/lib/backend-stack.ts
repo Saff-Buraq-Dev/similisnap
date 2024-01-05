@@ -1,10 +1,13 @@
-import { Duration, Stack, StackProps } from 'aws-cdk-lib';
+import { Duration, RemovalPolicy, Stack, StackProps } from 'aws-cdk-lib';
 import { AuthorizationType, Cors, LambdaIntegration, RestApi, TokenAuthorizer } from 'aws-cdk-lib/aws-apigateway';
 import { Code, Function, Runtime } from 'aws-cdk-lib/aws-lambda';
 import { Construct } from 'constructs';
 import { Certificate, CertificateValidation } from 'aws-cdk-lib/aws-certificatemanager';
 import { EndpointType } from 'aws-cdk-lib/aws-apigatewayv2';
 import { AttributeType, BillingMode, Table } from 'aws-cdk-lib/aws-dynamodb';
+import { BlockPublicAccess, Bucket, EventType, HttpMethods } from 'aws-cdk-lib/aws-s3';
+import { PythonFunction } from '@aws-cdk/aws-lambda-python-alpha';
+import { S3EventSource } from 'aws-cdk-lib/aws-lambda-event-sources';
 
 const path = require('path');
 
@@ -22,25 +25,56 @@ export class BackendStack extends Stack {
   private apiGateway: RestApi;
   private authorizer: TokenAuthorizer;
 
+  private picturesBucket: Bucket;
+
+  private lambdaFunctionGetSignedUrl: Function;
   private lambdaFunctionWelcomeUser: Function;
   private lambdaFunctionUpdateProfile: Function;
   private lambdaFunctionGetUserProfile: Function;
+  private lambdaFunctionClassifyImages: PythonFunction;
 
   constructor(scope: Construct, id: string, props: BackendStackProps) {
     super(scope, id, props);
 
+    /*************************************************************************
+     ***********************      API CERTIFICATE     ************************
+     *************************************************************************/
     this.apiCertificate = new Certificate(this, 'SimiliSnapCertificate', {
       domainName: 'api.similisnap.gharbidev.com',
       validation: CertificateValidation.fromDns()
     });
 
+    /*************************************************************************
+     ************************      PHOTOS BUCKET     *************************
+     *************************************************************************/
+    this.picturesBucket = new Bucket(this, 'SimilisnapPicturesBucket', {
+      bucketName: `${props.paramProjectName}-${props.paramProjectEnv}-${props.paramProjectId}-similisnap-photos-bucket`
+        .toLowerCase(),
+      publicReadAccess: false,
+      blockPublicAccess: BlockPublicAccess.BLOCK_ALL,
+      removalPolicy: RemovalPolicy.RETAIN,
+      cors: [
+        {
+          allowedMethods: [HttpMethods.HEAD, HttpMethods.GET, HttpMethods.PUT],
+          allowedOrigins: ['*'],
+          allowedHeaders: ['Authorization', '*'],
+        },
+      ],
+    });
+
+    /*************************************************************************
+     *************************      DDB USERS      ***************************
+     *************************************************************************/
     this.usersPreferencesTable = new Table(this, 'UsersTable', {
       partitionKey: { name: 'uid', type: AttributeType.STRING },
       deletionProtection: true,
       billingMode: BillingMode.PAY_PER_REQUEST
     });
 
-    // API Gateway
+
+    /*************************************************************************
+     *************************      API GATEWAY     **************************
+     *************************************************************************/
     this.apiGateway = new RestApi(this, 'SimiliSnapApi', {
       restApiName: `${props.paramProjectName}-${props.paramProjectEnv}-${props.paramProjectId}-similisnapapi`,
       description: 'SimiliSnap API',
@@ -64,6 +98,10 @@ export class BackendStack extends Stack {
       authorizerName: 'SimiliSnapAuthorizer',
     });
 
+
+    /*************************************************************************
+     *******************      API LAMBDAS INTEGRATION     ********************
+     *************************************************************************/
     // Lambda welcome users
     this.lambdaFunctionWelcomeUser = new Function(this, 'APIGatewayFirebaseAuthorizer', {
       functionName: `${props.paramProjectName}-${props.paramProjectEnv}-${props.paramProjectId}-lambdaWelcomeUsers`,
@@ -110,7 +148,8 @@ export class BackendStack extends Stack {
       runtime: Runtime.PYTHON_3_12,
       timeout: Duration.seconds(30),
       environment: {
-        DDB_TABLE: this.usersPreferencesTable.tableName
+        DDB_TABLE: this.usersPreferencesTable.tableName,
+        BUCKET_NAME: this.picturesBucket.bucketName,
       }
     });
 
@@ -122,5 +161,43 @@ export class BackendStack extends Stack {
       authorizer: this.authorizer,
       authorizationType: AuthorizationType.CUSTOM
     });
+
+    this.lambdaFunctionGetSignedUrl = new Function(this, 'lambdaGetSignedUrl', {
+      functionName: `${props.paramProjectName}-${props.paramProjectEnv}-${props.paramProjectId}-lambdaGetSignedUrl`,
+      code: Code.fromAsset(path.join(__dirname, 'lambdas', 'get-signed-url')),
+      handler: 'lambda_function.lambda_handler',
+      runtime: Runtime.PYTHON_3_12,
+      timeout: Duration.seconds(30),
+      environment: {
+        DDB_TABLE: this.usersPreferencesTable.tableName,
+        BUCKET_NAME: this.picturesBucket.bucketName
+      }
+    });
+
+    // The lambda needs the put action on the bucket
+    this.picturesBucket.grantPut(this.lambdaFunctionGetSignedUrl);
+
+    // RESOURCE FOR UPLOAD
+    const uploadResource = this.apiGateway.root.addResource('upload');
+    uploadResource.addMethod('POST', new LambdaIntegration(this.lambdaFunctionGetSignedUrl), {
+      authorizer: this.authorizer,
+      authorizationType: AuthorizationType.CUSTOM
+    });
+
+    // Lambda classify images
+    this.lambdaFunctionClassifyImages = new PythonFunction(this, 'lambdaClassifyImages', {
+      entry: 'lib/lambdas/classify-images',
+      index: 'lambda_function.py',
+      handler: 'lambda_handler',
+      runtime: Runtime.PYTHON_3_12,
+      timeout: Duration.minutes(3),
+      memorySize: 1024
+    });
+
+    this.picturesBucket.grantReadWrite(this.lambdaFunctionClassifyImages);
+    const s3EventSource = new S3EventSource(this.picturesBucket, {
+      events: [EventType.OBJECT_CREATED]
+    });
+    this.lambdaFunctionClassifyImages.addEventSource(s3EventSource);
   }
 }
