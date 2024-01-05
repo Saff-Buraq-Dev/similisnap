@@ -189,7 +189,7 @@ export class BackendStack extends Stack {
       entry: 'lib/lambdas/classify-images',
       index: 'lambda_function.py',
       handler: 'lambda_handler',
-      runtime: Runtime.PYTHON_3_12,
+      runtime: Runtime.PYTHON_3_11,
       timeout: Duration.minutes(3),
       memorySize: 1024
     });
