@@ -13,13 +13,6 @@ import AccountSettings from "../../components/Settings/AccountSettings/AccountSe
 
 export default defineComponent({
   name: "AccountSettingsPage",
-  data() {
-    return {
-      user: {
-
-      }
-    }
-  },
   components: {
     BreadCrumb,
     CoverImage,

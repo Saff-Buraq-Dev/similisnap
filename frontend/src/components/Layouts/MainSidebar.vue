@@ -15,8 +15,8 @@
     </div>
     <div class="sidebar-menu">
       <ul class="sidebar-navbar-nav ps-0 mb-0 list-unstyled accordion" id="sidebarNavAccordion">
-        <div v-if="!store.state.user">
-          <li class="sidebar-nav-item accordion-item bg-transparent border-0 rounded-0" v-if="!store.state.user">
+        <div v-if="!user">
+          <li class="sidebar-nav-item accordion-item bg-transparent border-0 rounded-0" v-if="!user">
             <a href="#" class="accordion-button rounded-0 shadow-none bg-transparent d-block" data-bs-toggle="collapse"
               data-bs-target="#sidebarCollapseOne" aria-expanded="true" aria-controls="sidebarCollapseOne">
               <i class="flaticon-more-1"></i>
@@ -102,6 +102,7 @@ export default defineComponent({
   name: "MainSidebar",
   setup() {
     const store = useStore();
+    const user = store.state.user;
     const logout = () => {
       store.dispatch("logout");
     };
@@ -109,7 +110,7 @@ export default defineComponent({
     return {
       stateStoreInstance,
       logout,
-      store
+      user
     };
   },
 });

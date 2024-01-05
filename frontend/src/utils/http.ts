@@ -1,5 +1,6 @@
 import axios from "axios";
 import store from "../store/store";
+import { auth } from '../firebase';
 
 
 const axiosInstance = axios.create({
@@ -7,7 +8,13 @@ const axiosInstance = axios.create({
 })
 
 axiosInstance.interceptors.request.use((config) => {
-    config.headers.Authorization = store.state.user ? store.state.user["accessToken"] : "";
+    let authToken = "";
+    if (store.state.user) {
+        auth.currentUser?.getIdToken(true).then(token => {
+            authToken = token;
+        });
+    }
+    config.headers.Authorization = authToken;
     return config;
 });
 

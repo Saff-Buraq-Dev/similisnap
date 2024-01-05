@@ -35,7 +35,7 @@
       <!-- SETTINGS -->
       <div class="card mb-25 border-0 rounded-0 bg-white letter-spacing settings-card">
         <div class="card-body p-15 p-sm-20 p-md-25 p-lg-30">
-          <form>
+          <form @submit.prevent="">
             <div class="row">
               <div class="col-md-6">
                 <div class="form-group mb-15 mb-sm-20 mb-md-25">
@@ -67,7 +67,8 @@
                     Add Your Bio
                   </label>
                   <div class="mb-0">
-                    <QuillEditor theme="snow" placeholder="Write your meta description" toolbar="full" />
+                    <QuillEditor theme="snow" :toolbar="toolbarOptions" v-model:content="user.customAttributes.bio"
+                      contentType="text" />
                   </div>
                 </div>
               </div>
@@ -80,6 +81,7 @@
                     type="submit">
                     Save Changes
                   </button>
+
                   <button type="button" class="bg-transparent p-0 border-0 text-danger lh-1 fw-medium">
                     <i class="flaticon-delete lh-1 me-1 position-relative top-2"></i>
                     <span class="position-relative">Cancel</span>
@@ -91,6 +93,8 @@
         </div>
       </div>
     </div>
+
+    <!-- Profile infos section -->
     <div class="col-xxl-4 order-1 order-xl-2">
       <div class="card mb-25 border-0 rounded-0 bg-white profile-intro-card">
         <div class="card-body p-15 p-sm-20 p-sm-25 p-lg-30 letter-spacing">
@@ -129,11 +133,11 @@
               <img src="../../../assets/images/user/user7.jpg" class="rounded-circle" width="85" height="85" alt="user" />
               <div class="file-upload text-center bg-white rounded-circle text-primary">
                 <i class="flaticon-add-photo"></i>
-                <input type="file" />
+                <input type="file" @change="handleFileUpload($event)" />
               </div>
             </div>
             <div class="ms-20">
-              <h5 class="text-black fw-black mb-1">Victor James</h5>
+              <h5 class="text-black fw-black mb-1">{{}}</h5>
               <span class="d-block text-muted">@community</span>
             </div>
           </div>
@@ -142,8 +146,7 @@
               About Me
             </span>
             <p class="fs-md-15 mb-0 text-paragraph lh-base">
-              This event combines all the data and backend information to the
-              frontend.
+              {{ user.customAttributes.bio }}
             </p>
             <button type="button" class="border-0 d-inline-block p-0 rounded-circle text-center transition">
               <i class="ph-duotone ph-pencil-simple"></i>
@@ -177,10 +180,8 @@
 
 <script lang="ts">
 import { useStore } from "vuex";
-import { defineComponent } from "vue";
-import BlotFormatter from "quill-blot-formatter";
-import ImageUploader from "quill-image-uploader";
-import axios from "axios";
+import { defineComponent, ref } from "vue";
+import { uploadFiles } from "../../../services/upload";
 
 export default defineComponent({
   name: "AccountSettings",
@@ -189,33 +190,47 @@ export default defineComponent({
     // STORE
     const store = useStore();
     const user = store.state.user;
-    // MODULES
-    const modules = {
-      module: BlotFormatter,
-      ImageUploader,
-      options: {
-        upload: (file: string | Blob) => {
-          return new Promise((resolve, reject) => {
-            const formData = new FormData();
-            formData.append("image", file);
 
-            axios
-              .post("/upload-image", formData)
-              .then((res: { data: { url: unknown } }) => {
-                console.log(res);
-                resolve(res.data.url);
-              })
-              .catch((err: unknown) => {
-                reject("Upload failed");
-                console.error("Error:", err);
-              });
-          });
-        },
-      },
+    const toolbarOptions = [
+      ['bold', 'italic', 'underline', 'strike'],        // toggled buttons
+      ['blockquote', 'code-block'],
+
+      [{ 'header': 1 }, { 'header': 2 }],               // custom button values
+      [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+      [{ 'script': 'sub' }, { 'script': 'super' }],      // superscript/subscript
+      [{ 'indent': '-1' }, { 'indent': '+1' }],          // outdent/indent
+      [{ 'direction': 'rtl' }],                         // text direction
+
+      [{ 'size': ['small', false, 'large', 'huge'] }],  // custom dropdown
+      [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
+
+      [{ 'color': [] }, { 'background': [] }],          // dropdown with defaults from theme
+      [{ 'font': [] }],
+      [{ 'align': [] }],
+
+      ['clean']                                         // remove formatting button
+    ];
+
+    const handleFileUpload = async (event: Event) => {
+      const files = (event.target as HTMLInputElement).files;
+      if (files) {
+        const userId = user.uid;
+        const key = "profile";
+
+        try {
+          await uploadFiles(files, userId, key);
+          console.log('All files uploaded successfully');
+        } catch (error) {
+          console.error('Error uploading files', error);
+        }
+      }
     };
+
+
     return {
-      modules,
-      user
+      user,
+      toolbarOptions,
+      handleFileUpload
     };
   },
 });

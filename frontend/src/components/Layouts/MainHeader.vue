@@ -12,7 +12,7 @@
           </button>
 
           <!-- SEARCH -->
-          <form class="search-box" v-if="store.state.user">
+          <form class="search-box" v-if="user">
             <div class="input-group">
               <input type="text" class="form-control shadow-none rounded-0 border-0" placeholder="Search here" />
               <button
@@ -55,7 +55,7 @@
           <LightDarkSwtichBtn />
 
           <!-- Messages -->
-          <div class="dropdown email-dropdown" v-if="store.state.user">
+          <div class="dropdown email-dropdown" v-if="user">
             <button class="dropdown-toggle p-0 position-relative bg-transparent border-0 transition lh-1" type="button"
               data-bs-toggle="dropdown" aria-expanded="false">
               <i class="flaticon-email-2"></i>
@@ -109,7 +109,7 @@
 
 
           <!-- NOTIFICATIONS -->
-          <div class="dropdown notification-dropdown" v-if="store.state.user">
+          <div class="dropdown notification-dropdown" v-if="user">
             <button class="dropdown-toggle p-0 position-relative bg-transparent border-0 transition lh-1" type="button"
               data-bs-toggle="dropdown" aria-expanded="false">
               <i class="flaticon-bell-2"></i>
@@ -172,13 +172,13 @@
           </div>
 
           <!-- USER SECTION -->
-          <div class="dropdown profile-dropdown" v-if="store.state.user">
+          <div class="dropdown profile-dropdown" v-if="user">
             <button
               class="dropdown-toggle text-start fs-14 text-black-emphasis d-flex align-items-center p-0 position-relative bg-transparent border-0 transition lh-1"
               type="button" data-bs-toggle="dropdown" aria-expanded="false">
               <img :src="userPhotoUrl" class="rounded" width="44" height="44" alt="admin" />
               <span class="title d-none d-lg-block ms-10 ms-lg-15">
-                <span class="d-block fw-bold mb-5 mb-md-8">{{ userDisplayName }}</span>
+                <span class="d-block fw-bold mb-5 mb-md-8">{{ user.displayName }}</span>
                 <span class="text-body-emphasis fw-semibold fs-13">Community</span>
               </span>
             </button>
@@ -232,6 +232,7 @@ export default defineComponent({
   },
   setup() {
     const store = useStore();
+    const user = store.state.user;
     const stateStoreInstance = stateStore;
     const isSticky = ref(false);
     const languages = ref(
@@ -254,22 +255,14 @@ export default defineComponent({
 
     // Computed properties
     const userPhotoUrl = computed(() => {
-      return store.state.user && store.state.user.photoUrl
-        ? store.state.user.photoUrl
-        : require('../../assets/images/anonymous-user.png');
-    });
-
-    const userDisplayName = computed(() => {
-      return store.state.user && store.state.user.displayName
-        ? store.state.user.displayName
-        : store.state.user.email;
+      return require(store.state.user.photoUrl);
     });
 
     return {
       isSticky,
       stateStoreInstance,
       languages,
-      store,
+      user,
       userPhotoUrl,
       userDisplayName,
       logout

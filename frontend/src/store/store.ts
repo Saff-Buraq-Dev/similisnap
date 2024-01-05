@@ -20,9 +20,14 @@ const toaster = createToaster({
     duration: 3000,
 });
 
+interface User {
+    uid: string;
+    customAttributes?: any;
+}
+
 const store = createStore({
     state: {
-        user: null
+        user: null as User | null
     },
     mutations: {
         SET_USER(state, user) {
@@ -31,7 +36,13 @@ const store = createStore({
 
         CLEAR_USER(state) {
             state.user = null
-        }
+        },
+
+        SET_CUSTOM_ATTRIBUTES(state, customAttributes) {
+            if (state.user) {
+                state.user.customAttributes = customAttributes;
+            }
+        },
     },
     actions: {
         async login({ commit }, details) {
