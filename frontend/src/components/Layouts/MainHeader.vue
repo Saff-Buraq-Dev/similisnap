@@ -264,7 +264,6 @@ export default defineComponent({
       languages,
       user,
       userPhotoUrl,
-      userDisplayName,
       logout
     };
   },
