@@ -1,6 +1,6 @@
 import { Duration, RemovalPolicy, Stack, StackProps } from 'aws-cdk-lib';
 import { AuthorizationType, Cors, LambdaIntegration, RestApi, TokenAuthorizer } from 'aws-cdk-lib/aws-apigateway';
-import { Code, Function, LayerVersion, Runtime } from 'aws-cdk-lib/aws-lambda';
+import { Code, DockerImageCode, DockerImageFunction, Function, LayerVersion, Runtime } from 'aws-cdk-lib/aws-lambda';
 import { Construct } from 'constructs';
 import { Certificate, CertificateValidation } from 'aws-cdk-lib/aws-certificatemanager';
 import { EndpointType } from 'aws-cdk-lib/aws-apigatewayv2';
@@ -31,7 +31,8 @@ export class BackendStack extends Stack {
   private lambdaFunctionWelcomeUser: Function;
   private lambdaFunctionUpdateProfile: Function;
   private lambdaFunctionGetUserProfile: Function;
-  private lambdaFunctionClassifyImages: PythonFunction;
+
+  private lambdaFunctionClassifyImages: DockerImageFunction;
 
   constructor(scope: Construct, id: string, props: BackendStackProps) {
     super(scope, id, props);
@@ -185,18 +186,10 @@ export class BackendStack extends Stack {
     });
 
 
-    // Creating separate layers to respect maximum size
-    const tensorflowLayer = new PythonLayerVersion(this, 'tensorflowLayer', {
+    /**
+    const lambdaClassifyImagesLayer = new PythonLayerVersion(this, 'lambdaClassifyImagesLayer', {
       compatibleRuntimes: [Runtime.PYTHON_3_11, Runtime.PYTHON_3_10, Runtime.PYTHON_3_9],
-      entry: 'lib/lambdas/layers/tensorflow-layer',
-    });
-    const numpyLayer = new PythonLayerVersion(this, 'numpyLayer', {
-      compatibleRuntimes: [Runtime.PYTHON_3_11, Runtime.PYTHON_3_10, Runtime.PYTHON_3_9],
-      entry: 'lib/lambdas/layers/numpy-layer',
-    });
-    const pillowLayer = new PythonLayerVersion(this, 'pillowLayer', {
-      compatibleRuntimes: [Runtime.PYTHON_3_11, Runtime.PYTHON_3_10, Runtime.PYTHON_3_9],
-      entry: 'lib/lambdas/layers/pillow-layer',
+      entry: 'lib/lambdas/layers/classify-images-layer',
     });
 
     // Lambda classify images
@@ -208,8 +201,13 @@ export class BackendStack extends Stack {
       runtime: Runtime.PYTHON_3_11,
       timeout: Duration.minutes(3),
       memorySize: 2048,
-      layers: [tensorflowLayer, numpyLayer, pillowLayer],
+      layers: [lambdaClassifyImagesLayer],
     });
+     */
+
+    this.lambdaFunctionClassifyImages = new DockerImageFunction(this, "lambdaDocker", {
+      code: DockerImageCode.fromImageAsset('lib/lambdas/classify-images'),
+    })
 
     this.picturesBucket.grantReadWrite(this.lambdaFunctionClassifyImages);
     const s3EventSource = new S3EventSource(this.picturesBucket, {
