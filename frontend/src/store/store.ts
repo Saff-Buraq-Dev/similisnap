@@ -22,7 +22,7 @@ const toaster = createToaster({
 
 interface User {
     uid: string;
-    customAttributes?: any;
+    customAttributes?;
 }
 
 const store = createStore({

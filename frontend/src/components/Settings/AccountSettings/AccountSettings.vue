@@ -180,7 +180,7 @@
 
 <script lang="ts">
 import { useStore } from "vuex";
-import { defineComponent, ref } from "vue";
+import { defineComponent } from "vue";
 import { uploadFiles } from "../../../services/upload";
 
 export default defineComponent({

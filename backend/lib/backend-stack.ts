@@ -184,9 +184,19 @@ export class BackendStack extends Stack {
       authorizationType: AuthorizationType.CUSTOM
     });
 
-    const lambdaClassifyImagesLayer = new PythonLayerVersion(this, 'lambdaClassifyImagesLayer', {
+
+    // Creating separate layers to respect maximum size
+    const tensorflowLayer = new PythonLayerVersion(this, 'tensorflowLayer', {
       compatibleRuntimes: [Runtime.PYTHON_3_11, Runtime.PYTHON_3_10, Runtime.PYTHON_3_9],
-      entry: 'lib/lambdas/layers/classify-images-layer',
+      entry: 'lib/lambdas/layers/tensorflow-layer',
+    });
+    const numpyLayer = new PythonLayerVersion(this, 'numpyLayer', {
+      compatibleRuntimes: [Runtime.PYTHON_3_11, Runtime.PYTHON_3_10, Runtime.PYTHON_3_9],
+      entry: 'lib/lambdas/layers/numpy-layer',
+    });
+    const pillowLayer = new PythonLayerVersion(this, 'pillowLayer', {
+      compatibleRuntimes: [Runtime.PYTHON_3_11, Runtime.PYTHON_3_10, Runtime.PYTHON_3_9],
+      entry: 'lib/lambdas/layers/pillow-layer',
     });
 
     // Lambda classify images
@@ -197,9 +207,8 @@ export class BackendStack extends Stack {
       handler: 'lambda_handler',
       runtime: Runtime.PYTHON_3_11,
       timeout: Duration.minutes(3),
-      memorySize: 1024,
-      layers: [lambdaClassifyImagesLayer],
-
+      memorySize: 2048,
+      layers: [tensorflowLayer, numpyLayer, pillowLayer],
     });
 
     this.picturesBucket.grantReadWrite(this.lambdaFunctionClassifyImages);
