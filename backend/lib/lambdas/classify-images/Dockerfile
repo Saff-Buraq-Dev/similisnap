@@ -1,9 +1,10 @@
-FROM amazon/aws-lambda-python:latest
+FROM amazon/aws-lambda-python:3.11
 
 # Installs python, removes cache file to make things smaller
-RUN yum update -y && \
-    yum install -y python3 python3-dev python3-pip gcc && \
-    rm -Rf /var/cache/yum
+RUN dnf update -y && \
+    dnf install -y python3 python3-devel python3-pip gcc && \
+    dnf clean all
+
 # Be sure to copy over the function itself!
 COPY lambda_function.py ./
 # Copies requirements.txt file into the container
