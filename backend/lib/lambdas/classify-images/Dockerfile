@@ -1,4 +1,4 @@
-FROM amazon/aws-lambda-python:3.11
+FROM amazon/aws-lambda-python:3.10
 
 # Installs python, removes cache file to make things smaller
 RUN dnf update -y && \
