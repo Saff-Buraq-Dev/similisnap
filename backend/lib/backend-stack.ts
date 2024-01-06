@@ -1,12 +1,12 @@
 import { Duration, RemovalPolicy, Stack, StackProps } from 'aws-cdk-lib';
 import { AuthorizationType, Cors, LambdaIntegration, RestApi, TokenAuthorizer } from 'aws-cdk-lib/aws-apigateway';
-import { Code, Function, Runtime } from 'aws-cdk-lib/aws-lambda';
+import { Code, Function, LayerVersion, Runtime } from 'aws-cdk-lib/aws-lambda';
 import { Construct } from 'constructs';
 import { Certificate, CertificateValidation } from 'aws-cdk-lib/aws-certificatemanager';
 import { EndpointType } from 'aws-cdk-lib/aws-apigatewayv2';
 import { AttributeType, BillingMode, Table } from 'aws-cdk-lib/aws-dynamodb';
 import { BlockPublicAccess, Bucket, EventType, HttpMethods } from 'aws-cdk-lib/aws-s3';
-import { PythonFunction } from '@aws-cdk/aws-lambda-python-alpha';
+import { PythonFunction, PythonLayerVersion } from '@aws-cdk/aws-lambda-python-alpha';
 import { S3EventSource } from 'aws-cdk-lib/aws-lambda-event-sources';
 
 const path = require('path');
@@ -184,19 +184,27 @@ export class BackendStack extends Stack {
       authorizationType: AuthorizationType.CUSTOM
     });
 
+    const lambdaClassifyImagesLayer = new PythonLayerVersion(this, 'lambdaClassifyImagesLayer', {
+      compatibleRuntimes: [Runtime.PYTHON_3_11, Runtime.PYTHON_3_10, Runtime.PYTHON_3_9],
+      entry: 'lib/lambdas/layers/classify-images-layer',
+    });
+
     // Lambda classify images
     this.lambdaFunctionClassifyImages = new PythonFunction(this, 'lambdaClassifyImages', {
+      functionName: `${props.paramProjectName}-${props.paramProjectEnv}-${props.paramProjectId}-lambdaFunctionClassifyImages`,
       entry: 'lib/lambdas/classify-images',
       index: 'lambda_function.py',
       handler: 'lambda_handler',
       runtime: Runtime.PYTHON_3_11,
       timeout: Duration.minutes(3),
-      memorySize: 1024
+      memorySize: 1024,
+      layers: [lambdaClassifyImagesLayer],
+
     });
 
     this.picturesBucket.grantReadWrite(this.lambdaFunctionClassifyImages);
     const s3EventSource = new S3EventSource(this.picturesBucket, {
-      events: [EventType.OBJECT_CREATED]
+      events: [EventType.OBJECT_CREATED_PUT, EventType.OBJECT_CREATED_POST]
     });
     this.lambdaFunctionClassifyImages.addEventSource(s3EventSource);
   }
