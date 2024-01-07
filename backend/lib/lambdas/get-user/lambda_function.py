@@ -63,7 +63,13 @@ def lambda_handler(event, context):
     user_data = response.get('Item')
     logger.info(f'User data: {user_data}')
     if not user_data:
-        return {'statusCode': 404, 'body': json.dumps('User not found')}
+        return {
+            'statusCode': 404,
+            'headers': {
+                'Access-Control-Allow-Origin': "*"
+            },
+            'body': json.dumps('User not found')
+        }
 
     # Check for profile picture
     profile_pic_exists = check_profile_pic_exists(uid)
