@@ -17,7 +17,12 @@ def lambda_handler(event, context):
     try:
         body = json.loads(event['body'])
     except json.JSONDecodeError:
-        return {'statusCode': 400, 'body': json.dumps('Invalid JSON')}
+        return {
+            'statusCode': 400,
+            'headers': {
+                'Access-Control-Allow-Origin': "*"
+            },
+            'body': json.dumps('Invalid JSON')}
 
     # Extract user information
     user_info = {
@@ -32,6 +37,17 @@ def lambda_handler(event, context):
     try:
         response = table.put_item(Item=user_info)
     except ClientError as e:
-        return {'statusCode': 500, 'body': json.dumps(e.response['Error']['Message'])}
+        return {
+            'statusCode': 500,
+            'headers': {
+                'Access-Control-Allow-Origin': "*"
+            },
+            'body': json.dumps(e.response['Error']['Message'])
+        }
 
-    return {'statusCode': 200, 'body': json.dumps('User information updated successfully')}
+    return {'statusCode': 200,
+            'headers': {
+                'Access-Control-Allow-Origin': "*"
+            },
+            'body': json.dumps('User information updated successfully')
+            }

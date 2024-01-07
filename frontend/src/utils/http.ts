@@ -1,12 +1,16 @@
-import axios from "axios";
-import store from "../store/store";
+import axios, { AxiosHeaderValue } from "axios";
+import { getUserToken } from "@/services/user";
 
 const axiosInstance = axios.create({
     baseURL: 'https://api.similisnap.gharbidev.com'
 })
 
-axiosInstance.interceptors.request.use((config) => {
-    config.headers.Authorization = store.state.user ? store.state.user["accessToken"] : "";
+axiosInstance.interceptors.request.use(async (config) => {
+    const token = await getUserToken() as AxiosHeaderValue;
+    if (token) {
+        console.log(token);
+        config.headers.Authorization = token;
+    }
     return config;
 });
 

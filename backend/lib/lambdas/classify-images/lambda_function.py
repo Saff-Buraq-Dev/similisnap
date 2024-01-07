@@ -13,13 +13,17 @@ logger.setLevel(logging.INFO)
 
 s3_client = boto3.client('s3')
 
+
 def load_model():
     # Load the ResNet50 model (assumes model is included in the deployment package or Lambda Layer)
-    model = tf.keras.applications.ResNet50(weights='imagenet', include_top=False)
+    model = tf.keras.applications.ResNet50(
+        weights='imagenet', include_top=False)
     model = tf.keras.Model(inputs=model.input, outputs=model.layers[-1].output)
     return model
 
+
 model = load_model()
+
 
 def preprocess_image(image_bytes):
     image = Image.open(io.BytesIO(image_bytes))
@@ -29,17 +33,18 @@ def preprocess_image(image_bytes):
     image_array = preprocess_input(image_array)
     return image_array
 
+
 def map_category(index):
     # Mapping of index ranges to broader classes
     class_mapping = {
         range(1, 299): "Animals",          # Animal related classes
         range(300, 400): "Nature",         # Nature related classes
         range(401, 500): "People",         # People related classes
-        range(501, 600): "Urban/Cityscapes", # Urban and cityscapes
+        range(501, 600): "Urban/Cityscapes",  # Urban and cityscapes
         range(601, 700): "Vehicles",       # Vehicles
-        range(701, 800): "Food and Drinks", # Food and drinks
-        range(801, 900): "Sports and Recreation", # Sports and recreation
-        range(901, 1000): "Technology and Gadgets", # Technology and gadgets
+        range(701, 800): "Food and Drinks",  # Food and drinks
+        range(801, 900): "Sports and Recreation",  # Sports and recreation
+        range(901, 1000): "Technology and Gadgets",  # Technology and gadgets
         # Art and Culture, Architecture and Interiors can be adjusted similarly
     }
 
@@ -50,6 +55,7 @@ def map_category(index):
 
     return "Unknown Class"
 
+
 def move_image(bucket, original_key, category):
     # Construct the new key path
     parts = original_key.split('/')
@@ -57,13 +63,15 @@ def move_image(bucket, original_key, category):
     new_key = '/'.join(parts)
 
     # Copy the object to the new location
-    s3_client.copy_object(Bucket=bucket, CopySource={'Bucket': bucket, 'Key': original_key}, Key=new_key)
+    s3_client.copy_object(Bucket=bucket, CopySource={
+                          'Bucket': bucket, 'Key': original_key}, Key=new_key)
 
     # Delete the original object
     s3_client.delete_object(Bucket=bucket, Key=original_key)
 
     logger.info(f'Moved {original_key} to {new_key}')
     return new_key
+
 
 def lambda_handler(event, context):
     try:
@@ -74,14 +82,19 @@ def lambda_handler(event, context):
 
         # Verify that the key follows the expected pattern 'user_id/images/image.png'
         if not key.count('/') == 2 or not key.split('/')[1] == 'images':
-            logger.info(f'File {key} does not match the required pattern. Skipping.')
+            logger.info(
+                f'File {key} does not match the required pattern. Skipping.')
             return {
                 'statusCode': 200,
+                'headers': {
+                    'Access-Control-Allow-Origin': "*"
+                },
                 'body': json.dumps(f'Skipped processing of {key}')
             }
 
         # Download the image from S3
-        file_byte_string = s3_client.get_object(Bucket=bucket, Key=key)['Body'].read()
+        file_byte_string = s3_client.get_object(
+            Bucket=bucket, Key=key)['Body'].read()
 
         # Preprocess the image
         preprocessed_image = preprocess_image(file_byte_string)
@@ -99,6 +112,9 @@ def lambda_handler(event, context):
 
         return {
             'statusCode': 200,
+            'headers': {
+                'Access-Control-Allow-Origin': "*"
+            },
             'body': json.dumps(f'Image moved to {new_key}')
         }
 
@@ -106,5 +122,8 @@ def lambda_handler(event, context):
         logger.error(f'Error processing image: {str(e)}')
         return {
             'statusCode': 500,
+            'headers': {
+                'Access-Control-Allow-Origin': "*"
+            },
             'body': json.dumps('Error processing the image')
         }

@@ -1,5 +1,7 @@
 // user.ts
 import axios from '../utils/http';
+import { auth } from '../firebase';
+import { onAuthStateChanged } from 'firebase/auth';
 
 export async function getUserById(userId: string) {
     return axios.get(`/users/${userId}`)
@@ -44,4 +46,19 @@ export async function updateUser(user) {
         .catch((error) => {
             console.log(error);
         })
+}
+
+export async function getUserToken() {
+    return new Promise((resolve) => {
+        const unsub = onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                const token = await user.getIdToken();
+                resolve(token);
+            } else {
+                console.log("User not logged in")
+                resolve(null);
+            }
+            unsub();
+        });
+    })
 }

@@ -14,9 +14,11 @@ BUCKET_NAME = os.environ.get('BUCKET_NAME')
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
+
 def lambda_handler(event, context):
     logger.info(event)
     return get_presigned_post_data(event)
+
 
 def create_presigned_post(bucket_name, key, expiration=60*3):
     """Generate a presigned URL S3 POST request to upload a file with size restrictions."""
@@ -32,6 +34,7 @@ def create_presigned_post(bucket_name, key, expiration=60*3):
 
     return response
 
+
 def get_presigned_post_data(event):
     """Handle the request to get the presigned URL."""
     try:
@@ -43,7 +46,8 @@ def get_presigned_post_data(event):
         logger.info(f'File name: {file_name}')
         logger.info(f'User ID: {user_id}')
 
-        content_type = mimetypes.guess_type(file_name)[0] or 'application/octet-stream'
+        content_type = mimetypes.guess_type(
+            file_name)[0] or 'application/octet-stream'
         logger.info(f'Content type: {content_type}')
 
         # Define allowed image MIME types
@@ -52,6 +56,9 @@ def get_presigned_post_data(event):
         if content_type not in allowed_mime_types:
             return {
                 "statusCode": 400,  # Bad Request
+                'headers': {
+                    'Access-Control-Allow-Origin': "*"
+                },
                 "body": json.dumps({
                     "error": True,
                     "data": None,
@@ -65,6 +72,9 @@ def get_presigned_post_data(event):
 
         return {
             "statusCode": 200,
+            'headers': {
+                'Access-Control-Allow-Origin': "*"
+            },
             "body": json.dumps({
                 "error": False,
                 "data": presigned_post_data,
@@ -76,12 +86,16 @@ def get_presigned_post_data(event):
         logger.error(e)
         return {
             "statusCode": 500,
+            'headers': {
+                'Access-Control-Allow-Origin': "*"
+            },
             "body": json.dumps({
                 "error": True,
                 "data": None,
                 "message": str(e)
             })
         }
+
 
 # Example usage
 if __name__ == "__main__":
