@@ -52,7 +52,13 @@ def lambda_handler(event, context):
     try:
         response = table.get_item(Key={'uid': uid})
     except ClientError as e:
-        return {'statusCode': 500, 'body': json.dumps(e.response['Error']['Message'])}
+        return {
+            'statusCode': 500,
+            'headers': {
+                'Access-Control-Allow-Origin': "*"
+            },
+            'body': json.dumps(e.response['Error']['Message'])
+        }
 
     user_data = response.get('Item')
     logger.info(f'User data: {user_data}')
@@ -71,4 +77,10 @@ def lambda_handler(event, context):
     user_data['profilePicExists'] = profile_pic_exists
     user_data['imageCount'] = image_count
 
-    return {'statusCode': 200, 'body': json.dumps(user_data)}
+    return {
+        'statusCode': 200,
+        'headers': {
+            'Access-Control-Allow-Origin': "*"
+        },
+        'body': json.dumps(user_data)
+    }

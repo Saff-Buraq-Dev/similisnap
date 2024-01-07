@@ -181,7 +181,6 @@ const unsub = onAuthStateChanged(auth, async (user) => {
             customUser = response.data;
         }
     }
-
     store.commit('SET_AUTH_IS_READY', true);
     store.commit('SET_USER', user);
     store.commit('SET_CUSTOM_USER', customUser);

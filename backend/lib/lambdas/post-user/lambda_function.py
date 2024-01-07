@@ -29,6 +29,9 @@ def lambda_handler(event, context):
     except (KeyError, TypeError, json.JSONDecodeError) as e:
         return {
             'statusCode': 400,
+            'headers': {
+                'Access-Control-Allow-Origin': "*"
+            },
             'body': json.dumps({'error': 'Bad Request: Invalid input'})
         }
 
@@ -38,6 +41,9 @@ def lambda_handler(event, context):
         if 'Item' in response:
             return {
                 'statusCode': 409,  # Conflict status code
+                'headers': {
+                    'Access-Control-Allow-Origin': "*"
+                },
                 'body': json.dumps({'error': 'User already exists'})
             }
         logger.info(f'User does not exist, adding user...')
@@ -53,11 +59,17 @@ def lambda_handler(event, context):
         logger.info(f'User added successfully: {response}')
         return {
             'statusCode': 200,
+            'headers': {
+                'Access-Control-Allow-Origin': "*"
+            },
             'body': json.dumps({'message': 'User added successfully'})
         }
     except ClientError as e:
         logger.error(e.response['Error']['Message'])
         return {
             'statusCode': 500,
+            'headers': {
+                'Access-Control-Allow-Origin': "*"
+            },
             'body': json.dumps({'error': 'Internal server error'})
         }
