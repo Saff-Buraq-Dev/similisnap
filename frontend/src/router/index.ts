@@ -38,8 +38,8 @@ const router = createRouter({
 
 router.beforeEach((to, from, next) => {
   setTimeout(() => {
-    console.log(to.path);
-    console.log(auth.currentUser);
+    console.log('ROUTER: ', to.path);
+    console.log('ROUTER: ', auth.currentUser);
 
     if ((to.path === '/login' || to.path === '/register') && auth.currentUser != null) {
       console.log('tatataaaa')

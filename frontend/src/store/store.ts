@@ -2,6 +2,7 @@ import { createStore } from 'vuex';
 import router from '../router';
 import { auth } from '../firebase';
 import {
+    onAuthStateChanged,
     UserCredential,
     createUserWithEmailAndPassword,
     sendEmailVerification,
@@ -14,35 +15,39 @@ import {
 } from 'firebase/auth';
 
 import { createToaster } from "@meforma/vue-toaster";
+import { getUserById, createUser } from '../services/user';
+
+import { CustomUser } from '@/models/customUser';
 
 const toaster = createToaster({
     position: "bottom",
     duration: 3000,
 });
 
-interface User {
-    uid: string;
-    customAttributes?;
-}
 
 const store = createStore({
     state: {
-        user: null as User | null
+        user: null,
+        customUser: null,
+        authIsReady: false
     },
     mutations: {
         SET_USER(state, user) {
-            state.user = user
+            state.user = user;
         },
 
         CLEAR_USER(state) {
             state.user = null
         },
 
-        SET_CUSTOM_ATTRIBUTES(state, customAttributes) {
-            if (state.user) {
-                state.user.customAttributes = customAttributes;
-            }
+        SET_AUTH_IS_READY(state, status) {
+            state.authIsReady = status;
         },
+
+        SET_CUSTOM_USER(state, customUser) {
+            state.customUser = customUser;
+        },
+
     },
     actions: {
         async login({ commit }, details) {
@@ -144,6 +149,7 @@ const store = createStore({
         },
 
         async handleRedirect({ commit }) {
+            console.log('handle redirect');
             try {
                 const result = await getRedirectResult(auth);
                 if (result) {
@@ -155,20 +161,32 @@ const store = createStore({
             }
         },
 
-        fetchUser({ commit }) {
-            auth.onAuthStateChanged(async user => {
-                if (user === null) {
-                    commit('CLEAR_USER')
-                } else {
-                    commit('SET_USER', user)
-                    if (router.currentRoute.value.path === '/login') {
-                        router.push('/')
-                    }
-                }
-            })
-        }
-
     }
 });
+
+const unsub = onAuthStateChanged(auth, async (user) => {
+    let customUser: CustomUser;
+    if (user && !store.state.customUser) {
+        const response = await getUserById(user.uid);
+        if (response.status != 200) {
+            const response = createUser(user);
+            console.log(response);
+            customUser.uid = user.uid;
+            customUser.email = user.email;
+            customUser.displayName = user.displayName;
+            customUser.photoURL = user.photoURL;
+            customUser.bio = "";
+            customUser.country = "";
+        } else {
+            customUser = response.data;
+        }
+    }
+
+    store.commit('SET_AUTH_IS_READY', true);
+    store.commit('SET_USER', user);
+    store.commit('SET_CUSTOM_USER', customUser);
+    console.log('STATE: onAuthStateChanged')
+    unsub();
+})
 
 export default store;

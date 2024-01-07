@@ -24,7 +24,8 @@ def lambda_handler(event, context):
         uid = body['uid']
         email = body['email']
         display_name = body['displayName']
-        logger.info(f'User ID: {uid}, Email: {email}, DisplayName: {display_name}')
+        logger.info(
+            f'User ID: {uid}, Email: {email}, DisplayName: {display_name}')
     except (KeyError, TypeError, json.JSONDecodeError) as e:
         return {
             'statusCode': 400,
@@ -45,7 +46,8 @@ def lambda_handler(event, context):
                 'uid': uid,
                 'email': email,
                 'displayName': display_name,
-                'bio': ''
+                'bio': '',
+                'country': ''
             }
         )
         logger.info(f'User added successfully: {response}')
