@@ -86,7 +86,8 @@ export class BackendStack extends Stack {
       },
       defaultCorsPreflightOptions: {
         allowOrigins: Cors.ALL_ORIGINS,
-        allowCredentials: true
+        allowCredentials: true,
+        allowHeaders: ['Authorization', '*'],
       },
 
     });
