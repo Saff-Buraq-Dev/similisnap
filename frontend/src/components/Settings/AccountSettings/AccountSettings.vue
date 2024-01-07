@@ -1,5 +1,12 @@
 <template>
-  <div class="row">
+  <div v-if="!authIsReady">
+    <div class="text-center">
+      <div class="spinner-border" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+    </div>
+  </div>
+  <div class="row" v-else>
     <div class="col-xxl-8 order-2 order-xl-1">
       <div class="card mb-25 border-0 rounded-0 bg-white letter-spacing">
         <div class="card-body p-10">
@@ -35,14 +42,15 @@
       <!-- SETTINGS -->
       <div class="card mb-25 border-0 rounded-0 bg-white letter-spacing settings-card">
         <div class="card-body p-15 p-sm-20 p-md-25 p-lg-30">
-          <form @submit.prevent="">
+          <form @submit.prevent="saveUser">
             <div class="row">
               <div class="col-md-6">
                 <div class="form-group mb-15 mb-sm-20 mb-md-25">
                   <label class="d-block text-black fw-semibold mb-10">
                     Display name
                   </label>
-                  <input type="text" class="form-control shadow-none rounded-0 text-black" placeholder="e.g. John Doe" />
+                  <input type="text" class="form-control shadow-none rounded-0 text-black"
+                    v-model="customUser.displayName" placeholder="e.g. John Doe" />
                 </div>
               </div>
 
@@ -52,10 +60,11 @@
                   <label class="d-block text-black fw-semibold mb-10">
                     Country
                   </label>
-                  <select class="form-select shadow-none fw-semibold rounded-0">
-                    <option selected>United States</option>
-                    <option value="1">Canada</option>
-                    <option value="2">Palestine</option>
+                  <select class="form-select shadow-none fw-semibold rounded-0" v-model="customUser.country">
+                    <option value="" disabled>Choose your country</option>
+                    <option value="us">United States</option>
+                    <option value="canada">Canada</option>
+                    <option value="palestine">Palestine</option>
                   </select>
                 </div>
               </div>
@@ -67,7 +76,7 @@
                     Add Your Bio
                   </label>
                   <div class="mb-0">
-                    <QuillEditor theme="snow" :toolbar="toolbarOptions" v-model:content="user.customAttributes.bio"
+                    <QuillEditor theme="snow" :toolbar="toolbarOptions" v-model:content="customUser.bio"
                       contentType="text" />
                   </div>
                 </div>
@@ -137,7 +146,7 @@
               </div>
             </div>
             <div class="ms-20">
-              <h5 class="text-black fw-black mb-1">{{}}</h5>
+              <h5 class="text-black fw-black mb-1">{{ customUser.displayName || customUser.email }}</h5>
               <span class="d-block text-muted">@community</span>
             </div>
           </div>
@@ -146,7 +155,7 @@
               About Me
             </span>
             <p class="fs-md-15 mb-0 text-paragraph lh-base">
-              {{ user.customAttributes.bio }}
+              {{ customUser.bio }}
             </p>
             <button type="button" class="border-0 d-inline-block p-0 rounded-circle text-center transition">
               <i class="ph-duotone ph-pencil-simple"></i>
@@ -156,19 +165,19 @@
             <div class="col-6 col-sm-4 col-xxl-6 col-xxxl-4">
               <div class="info p-10 p-sm-15 p-md-20">
                 <span class="d-block text-black-emphasis mb-1">Images</span>
-                <h4 class="d-block text-primary fw-black mb-0">2325</h4>
+                <h4 class="d-block text-primary fw-black mb-0">{{ customUser.numberImages }}</h4>
               </div>
             </div>
             <div class="col-6 col-sm-4 col-xxl-6 col-xxxl-4">
               <div class="info p-10 p-sm-15 p-md-20">
                 <span class="d-block text-black-emphasis mb-1">Following</span>
-                <h4 class="d-block text-success fw-black mb-0">1506</h4>
+                <h4 class="d-block text-success fw-black mb-0">0</h4>
               </div>
             </div>
             <div class="col-6 col-sm-4 col-xxl-6 col-xxxl-4">
               <div class="info p-10 p-sm-15 p-md-20">
                 <span class="d-block text-black-emphasis mb-1">Likes</span>
-                <h4 class="d-block text-info fw-black mb-0">10300</h4>
+                <h4 class="d-block text-info fw-black mb-0">0</h4>
               </div>
             </div>
           </div>
@@ -180,8 +189,9 @@
 
 <script lang="ts">
 import { useStore } from "vuex";
-import { defineComponent } from "vue";
+import { defineComponent, computed } from "vue";
 import { uploadFiles } from "../../../services/upload";
+import { updateUser } from "@/services/user";
 
 export default defineComponent({
   name: "AccountSettings",
@@ -189,7 +199,8 @@ export default defineComponent({
   setup: () => {
     // STORE
     const store = useStore();
-    const user = store.state.user;
+
+    const customUser = computed(() => store.state.customUser).value;
 
     const toolbarOptions = [
       ['bold', 'italic', 'underline', 'strike'],        // toggled buttons
@@ -214,7 +225,7 @@ export default defineComponent({
     const handleFileUpload = async (event: Event) => {
       const files = (event.target as HTMLInputElement).files;
       if (files) {
-        const userId = user.uid;
+        const userId = store.state.user.uid;
         const key = "profile";
 
         try {
@@ -226,11 +237,18 @@ export default defineComponent({
       }
     };
 
+    const saveUser = async () => {
+      const response = await updateUser(customUser);
+      console.log(response);
+    }
 
     return {
-      user,
+      customUser,
+      authIsReady: computed(() => store.state.authIsReady),
+      user: computed(() => store.state.user),
       toolbarOptions,
-      handleFileUpload
+      handleFileUpload,
+      saveUser
     };
   },
 });

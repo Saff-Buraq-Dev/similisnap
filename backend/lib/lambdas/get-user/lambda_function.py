@@ -1,5 +1,6 @@
 import json
 import os
+import logging
 import boto3
 from botocore.exceptions import ClientError
 
@@ -13,6 +14,10 @@ BUCKET_NAME = os.environ.get('BUCKET_NAME')
 # Get the DynamoDB table
 table = dynamodb.Table(DDB_USERS)
 
+# Initialize logger
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
+
 
 def check_profile_pic_exists(uid):
     file_extensions = ['png', 'jpg', 'jpeg']
@@ -23,8 +28,9 @@ def check_profile_pic_exists(uid):
             return True
         except ClientError as e:
             if e.response['Error']['Code'] != '404':
-                print(f"Error checking file: {e}")
+                logger.info(f"Error checking file: {e}")
     return False
+
 
 def get_image_count(uid):
     prefix = f'{uid}/images/'
@@ -37,6 +43,7 @@ def get_image_count(uid):
 
     return count
 
+
 def lambda_handler(event, context):
     # Get the 'uid' from the path parameter
     uid = event['pathParameters']['uid']
@@ -48,18 +55,20 @@ def lambda_handler(event, context):
         return {'statusCode': 500, 'body': json.dumps(e.response['Error']['Message'])}
 
     user_data = response.get('Item')
+    logger.info(f'User data: {user_data}')
     if not user_data:
         return {'statusCode': 404, 'body': json.dumps('User not found')}
 
     # Check for profile picture
     profile_pic_exists = check_profile_pic_exists(uid)
+    logger.info(f'Profile picture exists: {profile_pic_exists}')
 
     # Get the count of images
     image_count = get_image_count(uid)
+    logger.info(f'Image count: {image_count}')
 
     # Add additional information to user data
     user_data['profilePicExists'] = profile_pic_exists
     user_data['imageCount'] = image_count
 
     return {'statusCode': 200, 'body': json.dumps(user_data)}
-

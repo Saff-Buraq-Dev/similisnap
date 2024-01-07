@@ -1,12 +1,11 @@
 import { Duration, RemovalPolicy, Stack, StackProps } from 'aws-cdk-lib';
 import { AuthorizationType, Cors, LambdaIntegration, RestApi, TokenAuthorizer } from 'aws-cdk-lib/aws-apigateway';
-import { Code, DockerImageCode, DockerImageFunction, Function, LayerVersion, Runtime } from 'aws-cdk-lib/aws-lambda';
+import { Code, DockerImageCode, DockerImageFunction, Function, Runtime } from 'aws-cdk-lib/aws-lambda';
 import { Construct } from 'constructs';
 import { Certificate, CertificateValidation } from 'aws-cdk-lib/aws-certificatemanager';
 import { EndpointType } from 'aws-cdk-lib/aws-apigatewayv2';
 import { AttributeType, BillingMode, Table } from 'aws-cdk-lib/aws-dynamodb';
 import { BlockPublicAccess, Bucket, EventType, HttpMethods } from 'aws-cdk-lib/aws-s3';
-import { PythonFunction, PythonLayerVersion } from '@aws-cdk/aws-lambda-python-alpha';
 import { S3EventSource } from 'aws-cdk-lib/aws-lambda-event-sources';
 
 const path = require('path');
@@ -28,7 +27,7 @@ export class BackendStack extends Stack {
   private picturesBucket: Bucket;
 
   private lambdaFunctionGetSignedUrl: Function;
-  private lambdaFunctionWelcomeUser: Function;
+  private lambdaFunctionPostUser: Function;
   private lambdaFunctionUpdateProfile: Function;
   private lambdaFunctionGetUserProfile: Function;
 
@@ -86,8 +85,10 @@ export class BackendStack extends Stack {
         endpointType: EndpointType.REGIONAL,
       },
       defaultCorsPreflightOptions: {
-        allowOrigins: Cors.ALL_ORIGINS
-      }
+        allowOrigins: Cors.ALL_ORIGINS,
+        allowCredentials: true
+      },
+
     });
 
     // Dependency between api gateway and certificate
@@ -103,10 +104,10 @@ export class BackendStack extends Stack {
     /*************************************************************************
      *******************      API LAMBDAS INTEGRATION     ********************
      *************************************************************************/
-    // Lambda welcome users
-    this.lambdaFunctionWelcomeUser = new Function(this, 'APIGatewayFirebaseAuthorizer', {
+    // Lambda Post user
+    this.lambdaFunctionPostUser = new Function(this, 'APIGatewayFirebaseAuthorizer', {
       functionName: `${props.paramProjectName}-${props.paramProjectEnv}-${props.paramProjectId}-lambdaWelcomeUsers`,
-      code: Code.fromAsset(path.join(__dirname, 'lambdas', 'welcome-users')),
+      code: Code.fromAsset(path.join(__dirname, 'lambdas', 'post-user')),
       handler: 'lambda_function.lambda_handler',
       runtime: Runtime.PYTHON_3_12,
       timeout: Duration.seconds(30),
@@ -115,10 +116,10 @@ export class BackendStack extends Stack {
       }
     });
 
-    this.usersPreferencesTable.grantReadWriteData(this.lambdaFunctionWelcomeUser);
+    this.usersPreferencesTable.grantReadWriteData(this.lambdaFunctionPostUser);
 
     const usersResource = this.apiGateway.root.addResource('users');
-    usersResource.addMethod('POST', new LambdaIntegration(this.lambdaFunctionWelcomeUser), {
+    usersResource.addMethod('POST', new LambdaIntegration(this.lambdaFunctionPostUser), {
       authorizer: this.authorizer,
       authorizationType: AuthorizationType.CUSTOM
     });
@@ -126,7 +127,7 @@ export class BackendStack extends Stack {
     // Lambda update profile
     this.lambdaFunctionUpdateProfile = new Function(this, 'lambdaFunctionUpdateProfile', {
       functionName: `${props.paramProjectName}-${props.paramProjectEnv}-${props.paramProjectId}-lambdaUpdateProfile`,
-      code: Code.fromAsset(path.join(__dirname, 'lambdas', 'update-user-profile')),
+      code: Code.fromAsset(path.join(__dirname, 'lambdas', 'put-user')),
       handler: 'lambda_function.lambda_handler',
       runtime: Runtime.PYTHON_3_12,
       timeout: Duration.seconds(30),
@@ -144,7 +145,7 @@ export class BackendStack extends Stack {
     // Lambda get user profile
     this.lambdaFunctionGetUserProfile = new Function(this, 'lambdaFunctionGetUserProfile', {
       functionName: `${props.paramProjectName}-${props.paramProjectEnv}-${props.paramProjectId}-lambdaGetUserProfile`,
-      code: Code.fromAsset(path.join(__dirname, 'lambdas', 'get-user-profile')),
+      code: Code.fromAsset(path.join(__dirname, 'lambdas', 'get-user')),
       handler: 'lambda_function.lambda_handler',
       runtime: Runtime.PYTHON_3_12,
       timeout: Duration.seconds(30),
@@ -154,6 +155,7 @@ export class BackendStack extends Stack {
       }
     });
 
+    this.picturesBucket.grantRead(this.lambdaFunctionGetUserProfile);
     this.usersPreferencesTable.grantReadData(this.lambdaFunctionGetUserProfile);
 
     // Define a new resource for /users/{uid}

@@ -11,6 +11,7 @@ DDB_USERS = os.environ.get('DDB_TABLE')
 # Get the DynamoDB table
 table = dynamodb.Table(DDB_USERS)
 
+
 def lambda_handler(event, context):
     # Parse the JSON body from the event
     try:
@@ -23,7 +24,8 @@ def lambda_handler(event, context):
         'uid': body.get('uid', ''),
         'email': body.get('email', ''),
         'displayName': body.get('displayName', ''),
-        'bio': body.get('bio', '')
+        'bio': body.get('bio', ''),
+        'country': body.get('country', ''),
     }
 
     # Update item in DynamoDB
@@ -33,4 +35,3 @@ def lambda_handler(event, context):
         return {'statusCode': 500, 'body': json.dumps(e.response['Error']['Message'])}
 
     return {'statusCode': 200, 'body': json.dumps('User information updated successfully')}
-

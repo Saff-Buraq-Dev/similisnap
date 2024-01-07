@@ -8,9 +8,7 @@
 </template>
 
 <script lang="ts">
-import axios from "axios";
-import { useStore } from "vuex";
-import { defineComponent, watchEffect, onBeforeMount } from "vue";
+import { defineComponent, watchEffect } from "vue";
 import stateStore from "./utils/store";
 
 import MainHeader from "./components/Layouts/MainHeader.vue";
@@ -29,36 +27,6 @@ export default defineComponent({
     document.body.classList.add("bg-body-secondary");
   },
   setup() {
-    const store = useStore();
-
-    onBeforeMount(() => {
-      store.dispatch('fetchUser').then(() => {
-        if (store.state.user && !store.state.user.customAttributes) {
-          const user = store.state.user;
-          axios.get(`/users/${user.uid}`)
-            .then(response => {
-              console.log(response);
-              // Display Name
-              if (!user.displayName && response.data.displayName) {
-                user.displayName = response.data.displayName;
-              } else if (!user.displayName && !response.data.displayName) {
-                user.displayName = user.email;
-              }
-              // Photo URL
-              if (!user.photoUrl && response.data.profilePicExists) {
-                user.photoUrl = `${user.uid}/profile/profile_pic.png`;
-              } else if (!user.photoUrl && !response.data.profilePicExists) {
-                user.photoUrl = '../../assets/images/anonymous-user.png';
-              }
-              user.customAttributes = response.data;
-              store.commit('SET_USER', user);
-            })
-            .catch(error => {
-              console.error('Error fetching custom attributes:', error);
-            });
-        }
-      });
-    });
     const stateStoreInstance = stateStore;
     watchEffect(() => {
       if (stateStoreInstance.open) {

@@ -1,5 +1,5 @@
 // upload.ts
-import axios from 'axios';
+import axios from '../utils/http';
 
 interface PresignedPostData {
     url: string;
