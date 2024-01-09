@@ -85,6 +85,7 @@ export class BackendStack extends Stack {
         endpointType: EndpointType.REGIONAL,
       },
       defaultCorsPreflightOptions: {
+        allowMethods: Cors.ALL_METHODS,
         allowOrigins: Cors.ALL_ORIGINS,
         allowCredentials: true,
         allowHeaders: ['Authorization', '*'],

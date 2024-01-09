@@ -11,7 +11,8 @@ import {
     signInWithRedirect,
     GoogleAuthProvider,
     GithubAuthProvider,
-    getRedirectResult
+    getRedirectResult,
+    User
 } from 'firebase/auth';
 
 import { createToaster } from "@meforma/vue-toaster";
@@ -19,13 +20,25 @@ import { getUserById, createUser } from '../services/user';
 
 import { CustomUser } from '@/models/customUser';
 
+import VuexPersistence from 'vuex-persist';
+
+const vuexLocal = new VuexPersistence({
+    storage: window.localStorage,
+    reducer: (state: State) => state.customUser
+})
+
 const toaster = createToaster({
     position: "bottom",
     duration: 3000,
 });
 
+interface State {
+    user: User | null;
+    customUser: CustomUser | null;
+    authIsReady: boolean;
+}
 
-const store = createStore({
+const store = createStore<State>({
     state: {
         user: null,
         customUser: null,
@@ -161,30 +174,48 @@ const store = createStore({
             }
         },
 
-    }
+    },
+    plugins: [vuexLocal.plugin]
+
 });
 
 const unsub = onAuthStateChanged(auth, async (user) => {
-    let customUser: CustomUser;
+    let customUser: CustomUser = {
+        uid: "",
+        email: "",
+        displayName: "",
+        photoURL: "",
+        bio: "",
+        country: "",
+        profilePicExists: false,
+        imageCount: 0
+    };
     if (user && !store.state.customUser) {
+        console.log("CUSTOM USER: ", store.state.customUser)
         const response = await getUserById(user.uid);
+        console.log("RESPONSE:", response);
         if (response.status != 200) {
             const response = createUser(user);
-            console.log(response);
+            console.log("TOTO: ", response);
             customUser.uid = user.uid;
             customUser.email = user.email;
             customUser.displayName = user.displayName;
             customUser.photoURL = user.photoURL;
             customUser.bio = "";
             customUser.country = "";
+            customUser.profilePicExists = false;
+            customUser.imageCount = 0;
         } else {
             customUser = response.data;
+            if (!customUser.profilePicExists) {
+                customUser.photoURL = user.photoURL;
+            }
         }
     }
     store.commit('SET_AUTH_IS_READY', true);
     store.commit('SET_USER', user);
     store.commit('SET_CUSTOM_USER', customUser);
-    console.log('STATE: onAuthStateChanged')
+    console.log('STATE: onAuthStateChanged');
     unsub();
 })
 

@@ -4,5 +4,7 @@ export interface CustomUser {
     displayName: string,
     photoURL: string,
     bio: string,
-    country: string
+    country: string,
+    profilePicExists: boolean,
+    imageCount: number
 }
