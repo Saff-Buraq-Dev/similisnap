@@ -165,7 +165,7 @@
             <div class="col-6 col-sm-4 col-xxl-6 col-xxxl-4">
               <div class="info p-10 p-sm-15 p-md-20">
                 <span class="d-block text-black-emphasis mb-1">Images</span>
-                <h4 class="d-block text-primary fw-black mb-0">{{ customUser.numberImages }}</h4>
+                <h4 class="d-block text-primary fw-black mb-0">{{ customUser.imageCount }}</h4>
               </div>
             </div>
             <div class="col-6 col-sm-4 col-xxl-6 col-xxxl-4">
@@ -199,8 +199,6 @@ export default defineComponent({
   setup: () => {
     // STORE
     const store = useStore();
-
-    const customUser = computed(() => store.state.customUser).value;
 
     const toolbarOptions = [
       ['bold', 'italic', 'underline', 'strike'],        // toggled buttons
@@ -238,14 +236,20 @@ export default defineComponent({
     };
 
     const saveUser = async () => {
-      const response = await updateUser(customUser);
-      console.log(response);
+      await updateUser(store.state.customUser)
+        .then(response => {
+          console.log(response);
+        })
+        .then(() => {
+          store.dispatch("SET_CUSTOM_USER", store.state.customUser);
+        })
+
     }
 
     return {
-      customUser,
       authIsReady: computed(() => store.state.authIsReady),
       user: computed(() => store.state.user),
+      customUser: computed(() => store.state.customUser),
       toolbarOptions,
       handleFileUpload,
       saveUser

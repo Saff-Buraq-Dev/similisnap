@@ -1,12 +1,8 @@
 <template>
   <div v-if="!authIsReady">
-    <div class="text-center">
-      <div class="spinner-border" role="status">
-        <span class="visually-hidden">Loading...</span>
-      </div>
-    </div>
+
   </div>
-  <div v-else>
+  <div v-if="authIsReady">
     <div :class="[
       'sidebar-area position-fixed start-0 top-0 bg-black h-100vh transition',
       { active: stateStoreInstance.open },

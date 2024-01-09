@@ -271,7 +271,7 @@ export default defineComponent({
       authIsReady: computed(() => store.state.authIsReady),
       customUser: computed(() => store.state.customUser),
       userPhotoUrl: computed(() => {
-        if (store.state.customUser.profilePicExists) {
+        if (store.state.customUser && store.state.customUser.profilePicExists) {
           return require('../../assets/images/admin.jpg');
         } else if (store.state.user.photoURL) {
           return store.state.user.photoURL;
