@@ -23,7 +23,8 @@ import { CustomUser } from '@/models/customUser';
 import VuexPersistence from 'vuex-persist';
 
 const vuexLocal = new VuexPersistence({
-    storage: window.localStorage
+    storage: window.localStorage,
+    reducer: (state: State) => state.customUser
 })
 
 const toaster = createToaster({
