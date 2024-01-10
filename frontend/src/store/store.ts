@@ -51,6 +51,8 @@ const store = createStore<State>({
 
         CLEAR_USER(state) {
             state.user = null
+            state.customUser = null
+            state.authIsReady = false
         },
 
         SET_AUTH_IS_READY(state, status) {
@@ -211,10 +213,11 @@ const unsub = onAuthStateChanged(auth, async (user) => {
                 customUser.photoURL = user.photoURL;
             }
         }
+
+        store.commit('SET_CUSTOM_USER', customUser);
     }
     store.commit('SET_AUTH_IS_READY', true);
     store.commit('SET_USER', user);
-    store.commit('SET_CUSTOM_USER', customUser);
     console.log('STATE: onAuthStateChanged');
     unsub();
 })
